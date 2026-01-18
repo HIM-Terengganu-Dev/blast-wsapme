@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { storeWebhookEvent } from '@/lib/webhook-store';
 
 /**
  * Webhook endpoint for WSAPME status updates
@@ -31,6 +32,13 @@ export async function POST(request: NextRequest) {
       });
       return data;
     });
+
+    // Store webhook event in memory for debugging UI
+    const headers: Record<string, string> = {};
+    request.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+    storeWebhookEvent(payload, headers);
 
     console.log('[WEBHOOK] Raw payload:', JSON.stringify(payload, null, 2));
     console.log('[WEBHOOK] Payload keys:', Object.keys(payload));
