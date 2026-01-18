@@ -155,14 +155,18 @@ export async function getMessageInfo(
   // Use new endpoint as per WSAPME developer recommendation
   const endpoint = `${WSAPME_API_BASE}/v1/getMessageStatus`;
 
-  // Convert to new format: id_device and msg_key
-  // msg_key is the messageId (from messages.key.id)
-  const msg_key = request.messages?.key?.id || request.id_device;
-  const id_device = request.id_device || '5850';
+  // Convert to new format: device and messageId
+  // messageId is from messages.key.id
+  const messageId = request.messages?.key?.id;
+  const device = request.id_device || '5850';
+
+  if (!messageId) {
+    throw new Error('messageId is required (from messages.key.id)');
+  }
 
   const requestPayload = {
-    id_device: id_device,
-    msg_key: msg_key,
+    device: device,
+    messageId: messageId,
   };
 
   try {

@@ -88,10 +88,10 @@ export async function POST(request: NextRequest) {
           : messageData.messageTimestamp)
       : Math.floor(Date.now() / 1000);
 
-    // Build request using new format: id_device and msg_key
+    // Build request using new format: device and messageId
     const statusPayload = {
-      id_device: '5850',
-      msg_key: messageId, // Use messageId from send response
+      device: '5850',
+      messageId: messageId, // Use messageId from send response
     };
 
     console.log('[REQUEST] POST https://api.wsapme.com/v1/getMessageStatus');
