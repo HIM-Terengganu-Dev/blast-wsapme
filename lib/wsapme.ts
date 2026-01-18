@@ -9,22 +9,23 @@ const WSAPME_API_BASE = 'https://api.wsapme.com';
 const WSAPME_MASTER_BASE = 'https://master.wsapme.com';
 const WSAPME_API_BASE_V1 = 'https://api.wsapme.com/v1';
 
-// Safety: Allowed phone number for testing
-const ALLOWED_PHONE_NUMBER = '60189026292';
-const ALLOWED_PHONE_NUMBER_WITH_PLUS = '+60189026292';
-
 /**
- * Validates that phone number matches the allowed test number
- * This prevents accidental sends to other numbers or groups
+ * Validates phone number format (basic validation)
+ * Note: Removed hardcoded restriction - phone numbers are now flexible
  */
 function validatePhoneNumber(phone: string): void {
+  if (!phone || !phone.trim()) {
+    throw new Error('Phone number is required');
+  }
+  
+  // Basic validation: should contain digits and optionally start with +
   const normalized = phone.replace(/[+\s-]/g, '');
-  const allowedNormalized = ALLOWED_PHONE_NUMBER.replace(/[+\s-]/g, '');
-
-  if (normalized !== allowedNormalized) {
-    throw new Error(
-      `Safety check failed: Phone number must be ${ALLOWED_PHONE_NUMBER} or ${ALLOWED_PHONE_NUMBER_WITH_PLUS}. Provided: ${phone}`
-    );
+  if (normalized.length < 10 || normalized.length > 15) {
+    throw new Error('Phone number must be between 10 and 15 digits');
+  }
+  
+  if (!/^\d+$/.test(normalized)) {
+    throw new Error('Phone number must contain only digits (and optionally + at the start)');
   }
 }
 
@@ -324,8 +325,8 @@ export async function getDeviceInfo(deviceId: string): Promise<any> {
 
 /**
  * Helper function to format phone number to JID format
- * @param phone - Phone number (e.g., "60189026292" or "+60189026292")
- * @returns WhatsApp JID format (e.g., "60189026292@s.whatsapp.net")
+ * @param phone - Phone number (e.g., "60107756410" or "+60107756410")
+ * @returns WhatsApp JID format (e.g., "60107756410@s.whatsapp.net")
  */
 export function formatPhoneToJid(phone: string): string {
   const normalized = phone.replace(/[+\s-]/g, '');

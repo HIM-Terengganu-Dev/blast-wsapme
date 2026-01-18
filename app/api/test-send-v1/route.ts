@@ -18,7 +18,8 @@ function getToken(): string {
  * POST /api/test-send-v1
  * 
  * Body: {
- *   message?: string  // optional, defaults to test message
+ *   message?: string,  // optional, defaults to test message
+ *   to: string         // required, phone number to send to (e.g., "+60123456789")
  * }
  * 
  * Tests the format with redirect_url parameter
@@ -30,9 +31,21 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
     const testMessage = body.message || 'This is a test message from Marketing Blast Tracker';
+    const to = body.to;
+
+    if (!to || !to.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Phone number (to) is required',
+        },
+        { status: 400 }
+      );
+    }
 
     console.log('[DEBUG] Request body:', JSON.stringify(body, null, 2));
     console.log('[DEBUG] Test message:', testMessage);
+    console.log('[DEBUG] Recipient phone:', to);
 
     const token = getToken();
     const endpoint = 'https://api.wsapme.com/v1/sendMessage';
@@ -40,7 +53,7 @@ export async function POST(request: NextRequest) {
 
     const sendPayload = {
       device: '5850',
-      to: '+60189026292',
+      to: to.trim(),
       message: testMessage,
       redirect_url: webhookUrl,
     };

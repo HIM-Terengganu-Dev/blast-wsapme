@@ -16,6 +16,7 @@ export default function Home() {
   const [loadingDevices, setLoadingDevices] = useState(false);
   const [pollingActive, setPollingActive] = useState(false);
   const [statusHistory, setStatusHistory] = useState<Array<{time: Date, status: number, data: any}>>([]);
+  const [testPhoneNumber, setTestPhoneNumber] = useState<string>('+60107756410');
 
   useEffect(() => {
     async function fetchBlastData() {
@@ -84,6 +85,11 @@ export default function Home() {
   }
 
   async function handleTestSend() {
+    if (!testPhoneNumber || !testPhoneNumber.trim()) {
+      alert('Please enter a phone number to send the test message to.');
+      return;
+    }
+
     try {
       setSendingMessage(true);
       setSendResult(null);
@@ -97,6 +103,7 @@ export default function Home() {
         },
         body: JSON.stringify({
           message: 'This is a test message from Marketing Blast Tracker',
+          to: testPhoneNumber.trim(),
         }),
       });
 
@@ -129,6 +136,7 @@ export default function Home() {
               },
             body: JSON.stringify({
               messageId: messageId,
+              to: testPhoneNumber.trim(),
               messageData: sendData.data?.data || sendData.data, // Pass full message data from send response
             }),
             });
@@ -298,13 +306,20 @@ export default function Home() {
             </button>
             <button
               onClick={async () => {
+                if (!testPhoneNumber || !testPhoneNumber.trim()) {
+                  alert('Please enter a phone number to send the test message to.');
+                  return;
+                }
                 try {
                   setSendingMessage(true);
                   setSendResult(null);
                   const response = await fetch('/api/test-send-v1', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: 'Test message via /v1/sendMessage' }),
+                    body: JSON.stringify({ 
+                      message: 'Test message via /v1/sendMessage',
+                      to: testPhoneNumber.trim(),
+                    }),
                   });
                   const data = await response.json();
                   setSendResult(data);
@@ -320,6 +335,24 @@ export default function Home() {
               {sendingMessage ? 'Sending...' : 'Test Send (v1)'}
             </button>
           </div>
+        </div>
+
+        {/* Test Phone Number Input */}
+        <div className="mb-6 p-4 bg-white rounded-lg shadow-md">
+          <label htmlFor="test-phone" className="block text-sm font-medium text-gray-700 mb-2">
+            Test Phone Number
+          </label>
+          <input
+            id="test-phone"
+            type="text"
+            value={testPhoneNumber}
+            onChange={(e) => setTestPhoneNumber(e.target.value)}
+            placeholder="+60123456789"
+            className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="mt-2 text-sm text-gray-500">
+            Enter the phone number (with country code, e.g., +60123456789) to send test messages to.
+          </p>
         </div>
 
         {/* Send Result */}

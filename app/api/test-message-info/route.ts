@@ -7,7 +7,9 @@ import { getMessageInfo, formatPhoneToJid } from '@/lib/wsapme';
  * 
  * Body: {
  *   messageId: string,
- *   jid?: string  // optional, will be formatted from phone number
+ *   to?: string,      // optional, phone number (e.g., "+60123456789")
+ *   jid?: string,     // optional, WhatsApp JID format
+ *   messageData?: object  // optional, full message data from send response
  * }
  */
 export async function POST(request: NextRequest) {
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
   
   try {
     const body = await request.json();
-    const { messageId, jid, messageData } = body;
+    const { messageId, jid, messageData, to } = body;
 
     console.log('[DEBUG] Received request body:', JSON.stringify(body, null, 2));
 
@@ -31,8 +33,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use provided JID or format from phone number
-    const phoneJid = jid || formatPhoneToJid('+60189026292');
+    // Determine JID: use provided jid, or extract from messageData, or format from 'to' parameter, or use messageData.remoteJid
+    let phoneJid: string;
+    if (jid) {
+      phoneJid = jid;
+    } else if (messageData?.key?.remoteJid) {
+      // Use the recipient JID from the message data (where message was sent to)
+      phoneJid = messageData.key.remoteJid;
+    } else if (to) {
+      phoneJid = formatPhoneToJid(to);
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Phone number (to) or JID is required. Provide either "to" parameter or "messageData" with recipient information.',
+        },
+        { status: 400 }
+      );
+    }
+    
     console.log('[DEBUG] Using JID:', phoneJid);
     console.log('[DEBUG] Message ID:', messageId);
 

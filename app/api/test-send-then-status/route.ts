@@ -6,6 +6,11 @@ import { formatPhoneToJid } from '@/lib/wsapme';
  * Test endpoint: Send message via v2, then check status using master.wsapme.com/api/messageInfo
  * POST /api/test-send-then-status
  * 
+ * Body: {
+ *   to: string,         // required, phone number to send to (e.g., "+60123456789")
+ *   message?: string    // optional, message text
+ * }
+ * 
  * This generates clean API logs for WSAPME developer debugging
  */
 export async function POST(request: NextRequest) {
@@ -19,6 +24,20 @@ export async function POST(request: NextRequest) {
       throw new Error('WSAPME_USER_TOKEN not set');
     }
 
+    // Parse request body first
+    const body = await request.json().catch(() => ({}));
+    const to = body.to;
+
+    if (!to || !to.trim()) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Phone number (to) is required',
+        },
+        { status: 400 }
+      );
+    }
+
     // =================================================================
     // STEP 1: Send Message via v1/sendMessage2
     // =================================================================
@@ -26,8 +45,8 @@ export async function POST(request: NextRequest) {
     
     const sendPayload = {
       device: '5850',
-      to: '+60189026292',
-      message: 'Test message for status check - ' + new Date().toISOString(),
+      to: to.trim(),
+      message: body.message || 'Test message for status check - ' + new Date().toISOString(),
     };
 
     console.log('[REQUEST] POST https://api.wsapme.com/v1/sendMessage2');
@@ -79,7 +98,7 @@ export async function POST(request: NextRequest) {
     // =================================================================
     console.log('[STEP 2] ========== CHECK STATUS VIA /v1/getMessageStatus ==========');
     
-    const phoneJid = formatPhoneToJid('+60189026292');
+    const phoneJid = formatPhoneToJid(to.trim());
     
     // Use messageTimestamp from send response, or current time
     const messageTimestamp = messageData.messageTimestamp 
