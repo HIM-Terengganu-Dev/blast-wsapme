@@ -26,9 +26,11 @@ export function storeWebhookEvent(payload: any, headers?: Record<string, string>
     timestamp: new Date().toISOString(),
     payload,
     headers,
-    type: payload.type || payload.event || payload.eventType || 'unknown',
+    type: payload.type || payload.event || payload.eventType || (payload.status ? 'status_update' : 'unknown'),
     messageId: payload.id || payload.messageId || payload.key?.id || payload.data?.key?.id,
-    status: payload.status || payload.ack || payload.messageStatus,
+    status: payload.status || payload.ack || payload.messageStatus, // Can be "DELIVERY_ACK", "READ_ACK", "SERVER_ACK"
+    messageC2STimestamp: payload.messageC2STimestamp || payload.messageTimestamp,
+    remoteJid: payload.key?.remoteJid,
   };
 
   // Add to beginning of array

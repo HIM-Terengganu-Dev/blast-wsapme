@@ -7,6 +7,7 @@ import type {
 
 const WSAPME_API_BASE = 'https://api.wsapme.com';
 const WSAPME_MASTER_BASE = 'https://master.wsapme.com';
+const WSAPME_API_BASE_V1 = 'https://api.wsapme.com/v1';
 
 // Safety: Allowed phone number for testing
 const ALLOWED_PHONE_NUMBER = '60189026292';
@@ -151,7 +152,8 @@ export async function getMessageInfo(
   request: WSAPMEMessageInfoRequest
 ): Promise<WSAPMEMessageInfoResponse> {
   const token = getToken();
-  const endpoint = `${WSAPME_MASTER_BASE}/api/messageInfo`;
+  // Try api.wsapme.com instead of master.wsapme.com
+  const endpoint = `${WSAPME_API_BASE}/api/messageInfo`;
 
   console.log('[WSAPME API] Calling messageInfo endpoint:', endpoint);
   console.log('[WSAPME API] Request payload:', JSON.stringify(request, null, 2));

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const eventType = payload.type || payload.event || payload.eventType || payload.action || 'unknown';
     console.log('[WEBHOOK] Event type:', eventType);
     
-    // Check for status-related fields
+    // Check for status-related fields (including the example structure)
     const statusFields = {
       status: payload.status,
       messageStatus: payload.messageStatus,
@@ -57,10 +57,21 @@ export async function POST(request: NextRequest) {
       deliveryStatus: payload.deliveryStatus,
       readStatus: payload.readStatus,
       messageC2STimestamp: payload.messageC2STimestamp,
+      messageTimestamp: payload.messageTimestamp,
       messageId: payload.messageId || payload.id || payload.key?.id,
       timestamp: payload.timestamp,
+      remoteJid: payload.key?.remoteJid,
+      fromMe: payload.key?.fromMe,
     };
     console.log('[WEBHOOK] Status-related fields found:', JSON.stringify(statusFields, null, 2));
+    
+    // Check if this matches the example structure (status with DELIVERY_ACK, etc.)
+    if (payload.status && (payload.status === 'DELIVERY_ACK' || payload.status === 'READ_ACK' || payload.status === 'SERVER_ACK')) {
+      console.log('[WEBHOOK] ✅ STATUS UPDATE DETECTED:', payload.status);
+      console.log('[WEBHOOK] Message ID:', payload.key?.id);
+      console.log('[WEBHOOK] Message C2S Timestamp:', payload.messageC2STimestamp);
+      console.log('[WEBHOOK] Remote JID:', payload.key?.remoteJid);
+    }
 
     // Handle different webhook event types
     if (payload.type === 'text' || payload.message) {

@@ -294,7 +294,30 @@ export default function Home() {
               disabled={sendingMessage}
               className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-md"
             >
-              {sendingMessage ? 'Sending...' : 'Test Send Message'}
+              {sendingMessage ? 'Sending...' : 'Test Send Message (v2)'}
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  setSendingMessage(true);
+                  setSendResult(null);
+                  const response = await fetch('/api/test-send-v1', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: 'Test message via /v1/sendMessage' }),
+                  });
+                  const data = await response.json();
+                  setSendResult(data);
+                } catch (err: any) {
+                  setSendResult({ success: false, error: err.message });
+                } finally {
+                  setSendingMessage(false);
+                }
+              }}
+              disabled={sendingMessage}
+              className="px-6 py-3 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed transition-colors shadow-md"
+            >
+              {sendingMessage ? 'Sending...' : 'Test Send (v1)'}
             </button>
           </div>
         </div>
@@ -304,18 +327,54 @@ export default function Home() {
           <div className={`mb-4 p-4 rounded-lg ${
             sendResult.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
           }`}>
-            <h3 className={`font-semibold mb-2 ${
+            <h3 className={`font-semibold mb-3 ${
               sendResult.success ? 'text-green-800' : 'text-red-800'
             }`}>
               {sendResult.success ? '✓ Message Sent Successfully' : '✗ Failed to Send Message'}
             </h3>
-            {sendResult.messageId && (
-              <p className="text-sm text-gray-700 mb-2">
-                Message ID: <code className="bg-gray-100 px-2 py-1 rounded font-mono">{sendResult.messageId}</code>
-              </p>
+            
+            {sendResult.success && (
+              <div className="space-y-3">
+                {sendResult.messageId && (
+                  <div>
+                    <span className="text-sm font-semibold text-gray-700">Message ID:</span>
+                    <code className="ml-2 bg-gray-100 px-2 py-1 rounded font-mono text-sm">{sendResult.messageId}</code>
+                  </div>
+                )}
+                
+                {/* Full Response */}
+                <details className="mt-3">
+                  <summary className="text-sm font-semibold text-gray-700 cursor-pointer hover:text-gray-900 mb-2">
+                    📄 View Full Response Structure
+                  </summary>
+                  <div className="mt-2 p-3 bg-white rounded border border-gray-200">
+                    <pre className="text-xs overflow-x-auto">
+                      {JSON.stringify(sendResult.data || sendResult, null, 2)}
+                    </pre>
+                  </div>
+                </details>
+
+                {/* Exact Message Structure */}
+                {sendResult.messageData && (
+                  <details className="mt-3">
+                    <summary className="text-sm font-semibold text-gray-700 cursor-pointer hover:text-gray-900 mb-2">
+                      🔑 View Exact Message Structure (for status checks)
+                    </summary>
+                    <div className="mt-2 p-3 bg-white rounded border border-gray-200">
+                      <pre className="text-xs overflow-x-auto">
+                        {JSON.stringify(sendResult.messageData, null, 2)}
+                      </pre>
+                    </div>
+                  </details>
+                )}
+              </div>
             )}
+
             {sendResult.error && (
-              <p className="text-sm text-red-700 mt-1">{sendResult.error}</p>
+              <div className="mt-2">
+                <p className="text-sm text-red-700 font-semibold mb-1">Error:</p>
+                <p className="text-sm text-red-600">{sendResult.error}</p>
+              </div>
             )}
           </div>
         )}
