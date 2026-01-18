@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       throw new Error('WSAPME_USER_TOKEN not set');
     }
 
-    const phoneJid = formatPhoneToJid('+60189026292');
+    const phoneJid = formatPhoneToJid('+60107756410');
     const timestamp = messageTimestamp 
       ? (typeof messageTimestamp === 'string' ? parseInt(messageTimestamp, 10) : messageTimestamp)
       : Math.floor(Date.now() / 1000);
@@ -113,7 +113,14 @@ export async function POST(request: NextRequest) {
     console.log(`\n[${new Date().toISOString()}] ========== TEST COMPLETE ==========\n`);
 
     // Find which one worked
-    const successful = results.filter(r => r.success && (r.hasStatus || r.hasMessageC2STimestamp));
+    const successful = results.filter(r => {
+      if (!r.success) return false;
+      // Type guard: check if r has the properties we need
+      if ('hasStatus' in r) {
+        return r.hasStatus || r.hasMessageC2STimestamp;
+      }
+      return false;
+    });
 
     return NextResponse.json({
       success: true,
