@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     // Check if message was actually sent (even if response format is unexpected)
     // Store full message data for status checking (messageInfo needs complete message object)
-    const messageId = result.messageId || result.data?.id || result.data?.messageId || result.id;
+    const messageId = result.messageId || result.data?.id || result.data?.messageId;
     
     // EXACT MESSAGE STRUCTURE - Log this for future status checks
     const exactMessageStructure = result.data || result;
