@@ -152,11 +152,18 @@ export async function getMessageInfo(
   request: WSAPMEMessageInfoRequest
 ): Promise<WSAPMEMessageInfoResponse> {
   const token = getToken();
-  // Try api.wsapme.com instead of master.wsapme.com
-  const endpoint = `${WSAPME_API_BASE}/api/messageInfo`;
+  // Use new endpoint as per WSAPME developer recommendation
+  const endpoint = `${WSAPME_API_BASE}/v1/getMessageStatus`;
 
-  console.log('[WSAPME API] Calling messageInfo endpoint:', endpoint);
-  console.log('[WSAPME API] Request payload:', JSON.stringify(request, null, 2));
+  // Convert to new format: id_device and msg_key
+  // msg_key is the messageId (from messages.key.id)
+  const msg_key = request.messages?.key?.id || request.id_device;
+  const id_device = request.id_device || '5850';
+
+  const requestPayload = {
+    id_device: id_device,
+    msg_key: msg_key,
+  };
 
   try {
     const response = await fetch(endpoint, {
@@ -165,58 +172,37 @@ export async function getMessageInfo(
         'x-wsapme-token': token,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify(requestPayload),
     });
 
-    console.log('[WSAPME API] Response status:', response.status, response.statusText);
-    console.log('[WSAPME API] Response headers:', Object.fromEntries(response.headers.entries()));
-
     const responseText = await response.text();
-    console.log('[WSAPME API] Raw response:', responseText);
 
     let data;
     try {
       data = JSON.parse(responseText);
     } catch (parseError) {
-      console.error('[WSAPME API] Failed to parse JSON response:', parseError);
       throw new Error(`Invalid JSON response from WSAPME: ${responseText.substring(0, 200)}`);
     }
 
-    console.log('[WSAPME API] Parsed response data:', JSON.stringify(data, null, 2));
-
-    // Look for status in various locations
-    // Status can be "DELIVERY_ACK", "READ_ACK", "PENDING", etc. (strings, not numbers)
-    // Also check messages.status if nested
+    // Look for status in response
     const status = data.status || 
                    data.data?.status || 
-                   data.messages?.status || 
-                   data.data?.messages?.status ||
-                   data.data?.messages?.key?.status;
+                   data.messageStatus;
 
-    // Look for messageC2STimestamp (indicates message was received by recipient)
-    // This is the key field to check for delivery confirmation
+    // Look for messageC2STimestamp
     const messageC2STimestamp = data.messageC2STimestamp || 
-                                data.data?.messageC2STimestamp || 
-                                data.messages?.messageC2STimestamp ||
-                                data.data?.messages?.messageC2STimestamp;
-
-    console.log('[WSAPME API] Extracted status:', status, '(Type:', typeof status, ')');
-    console.log('[WSAPME API] Extracted messageC2STimestamp:', messageC2STimestamp);
+                                data.data?.messageC2STimestamp;
     
-    // Check if status indicates delivery (DELIVERY_ACK means message was received)
+    // Check if status indicates delivery
     const isDelivered = status === 'DELIVERY_ACK' || status === 'READ_ACK' || !!messageC2STimestamp;
-    console.log('[WSAPME API] Message delivered?', isDelivered);
 
     const result = {
-      success: data.success || isDelivered, // Success if status shows delivery or if explicitly true
+      success: data.success !== false,
       status: status,
       messageC2STimestamp: messageC2STimestamp,
       isDelivered: isDelivered,
       data: data.data || data,
-      ...data,
     };
-
-    console.log('[WSAPME API] Returning result:', JSON.stringify(result, null, 2));
 
     return result;
   } catch (error: any) {
